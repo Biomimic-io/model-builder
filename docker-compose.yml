@@ -8,3 +8,18 @@ services:
       - ./:/var/www/html/
     ports:
       - 80:80
+    # can  leave off the default entrypoint of "docker-php-entrypoint"
+    # since what it does isn't necessary here
+    command: "/bin/sh -c 'docker-php-ext-install mysqli && a2enmod rewrite && exec apache2-foreground'"
+#docker-php-ext-install mysqli pdo pdo_mysql
+  db:
+        container_name: modelbuilder
+        image: mysql
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: MYSQL_ROOT_PASSWORD
+            MYSQL_DATABASE: MYSQL_DATABASE
+            MYSQL_USER: MYSQL_USER
+            MYSQL_PASSWORD: MYSQL_PASSWORD
+        ports:
+            - "9906:3306"

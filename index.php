@@ -1,136 +1,82 @@
-<?php 
+<?php
+# since we have a rather tiny-scaled project, it will be better to keep it all in one file to minimize complexity
+# never ever try to use such approach for any larger-scale projects!
+# I'm usually selecting approach basing on particular project specifics
 
-if(isset($_GET['debug'])){
-        error_reporting(E_ERROR);
-        ini_set('display_errors', 1);
-        error_reporting(E_ALL);
-        ini_set('display_errors', 'On');
-    }
-    
-//SIMPLE PHP File To Save Formbuilder Json to .json
-$models = array_diff(scandir('models/'), array('..', '.'));
+# anyway, here we go!
 
+# init
+@ob_start();
+@ob_implicit_flush(0);
 
+# debug
+# @error_reporting(E_ALL);
+# @ini_set('display_errors','on');
+# /debug
 
-if(isset($_GET['mode'])&&$_GET['mode']=='save'){
-    file_put_contents("models/".$_GET['model'].".json", $_POST['data']);
-    echo 'done';
-    exit;
+date_default_timezone_set('Europe/Kiev'); # set desired timezone here
+# /init
+
+# route
+$req = !empty($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : strval(@getenv('REQUEST_URI'));
+if(false !== ($q = strpos($req,'?')) or false !== ($a = strpos($req,'&'))){
+	if($q and $a)
+		$x = ($q > $a) ? $a : $q;
+	else
+		$x = ($a) ? $a : $q;
+	$req = substr($req,0,$x);
+	if(isset($_GET[substr($req,0,$x)]))
+		unset($_GET[substr($req,0,$x)]);
+}
+if('/' == substr($req,0,1))
+	$req = substr($req,1);
+$route = (strpos($req,'/') !== false) ? explode('/',$req) : [$req];
+# /route
+
+# router
+$out = $err = '';
+if('model' == $route[0]){ # * /model
+
+	# following isn't a good practice at all, it only suits tiny-scaled projects
+	# normally it should be a separate routing processor
+	# in that tiny projects it can save time and effort though
+	if(!empty($route[1])){
+		if('list' == $route[1]){ # * /model/list
+			$out = [];
+			foreach(glob('./models/*.json') as $json)
+				$out[basename($json,'.json')] = date('r',filemtime($json));
+			if(!$out)
+				$err = "No models found!";
+		} elseif(preg_match('/^[\da-z\-_ ]+$/i',$route[1])){ # * /model/*
+			$act = !empty($route[2]) ? $route[2] : '';
+			if(file_exists("./models/{$route[1]}.json") or 'save' == $act){ # * /model/:name
+				$model = $route[1];
+				if('save' == $act and ($data = file_get_contents('php://input'))){ # POST /model/:name/save
+					if(preg_match('/^[\[\{].+[\}\]]$/',trim($data))){
+						if(@file_put_contents("./models/$model.json",trim($data))){
+							$out = 'ok';
+						} else $err = "Can't store model!";
+					} else $err = "Invalid model supplied!";
+				} else $out = file_get_contents("./models/$model.json");
+			} else $err = "Model not found!";
+		} elseif(!empty($route[1]))
+			$err = "Invalid model specified!";
+	}
 }
 
-?>
-<!DOCTYPE html>
-<html lang="en" >
-
-<head>
-
-  <meta charset="UTF-8">
-  
-<link rel="apple-touch-icon" type="image/png" href="https://cpwebassets.codepen.io/assets/favicon/apple-touch-icon-5ae1a0698dcc2402e9712f7d01ed509a57814f994c660df9f7a952f3060705ee.png" />
-<meta name="apple-mobile-web-app-title" content="CodePen">
-
-<link rel="shortcut icon" type="image/x-icon" href="https://cpwebassets.codepen.io/assets/favicon/favicon-aec34940fbc1a6e787974dcd360f2c6b63348d4b1f4e06c77743096d55480f33.ico" />
-
-<link rel="mask-icon" type="image/x-icon" href="https://cpwebassets.codepen.io/assets/favicon/logo-pin-8f3771b1072e3c38bd662872f6b673a722f4b3ca2421637d5596661b4e2132cc.svg" color="#111" />
-
-
-  <title>CodePen - formBuilder</title>
-  
-  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css'>
-  
-<style>
-body {
-  padding: 0;
-  margin: 10px 0;
-  background: #f2f2f2 url('https://formbuilder.online/assets/img/noise.png');
+if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) and 'xmlhttprequest' == strtolower($_SERVER['HTTP_X_REQUESTED_WITH'])){
+	$out = json_encode(['content'=>$out,'error'=>$err]);
+	ob_end_clean();
+	header('Content-Type: application/json; charset=UTF-8');
+	echo $out;
+	exit;
 }
-</style>
+# /router
 
-  <script>
-  window.console = window.console || function(t) {};
-</script>
-
-  
-  
-  <script>
-  if (document.location.search.match(/type=embed/gi)) {
-    window.parent.postMessage("resize", "*");
-  }
-</script>
-
-
-</head>
-
-<body translate="no" >
-    
-    <select name="models" id="models-select">
-    <option value="">--Please choose a Model--</option>
-    <?php foreach($models as $key=>$value){ ?>
-    <option value="<?php echo $value; ?>" <?php if($_GET['model']==str_replace('.json','',$value)){echo 'selected="selected" disabled';} ?>><?php echo $value; ?></option>
-    <?php } ?>
-    </select><!-- comment -->
-    --- Model Name <input type="text" name="new_model" id="new_model"></input><button type="submit" class="js-add-model">Create New Model</button>
-    
-  <div id="build-wrap"></div>
-
-  <script src='//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
-<script src='//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js'></script>
-<script src='https://formbuilder.online/assets/js/form-builder.min.js'></script>
-      <script id="rendered-js" >
-//# sourceURL=pen.js
-
-jQuery(function($) {
-    
-  var $fbEditor = document.getElementById('build-wrap');
-  var options = {
-      onSave: function(evt, formData) {
-          //formBuilder.actions.setData({formData});
-          console.log(formData);
-          $.ajax({
-                type: "POST",
-                url: "/index.php?mode=save&model=<?php echo $_GET['model'];?>",
-                data: { data: formData},
-                success: function(data){
-                    alert('Your Model has Been Saved.');
-                },
-                failure: function(errMsg) {
-                    alert('There Was a Problem Saving Your Model.');
-                }
-          });
-        },
-    };
-    var formBuilder = $($fbEditor).formBuilder(options);
-    <?php if(file_exists("models/".$_GET['model'].".json")){ ?>
-    var formData = '<?php echo file_get_contents("models/".$_GET['model'].".json"); ?>';
-    setTimeout(function(){ formBuilder.actions.setData(formData); }, 500);
-    <?php } ?>
-  
-  document.addEventListener('fieldAdded', function(){
-      console.log(formBuilder.formData);
-      window.sessionStorage.setItem('formData', JSON.stringify(formBuilder.formData));
-  });
-  
-  
-  
-    $('.js-add-model').on('click', function() {
-        var model = $('#new_model').val();
-        if(!model){
-            alert('Model Can not be Empty');
-        }
-        
-        top.location='?model='+model;
-  });
-
-  
-  $('#models-select').on('change', function() {
-        var model = this.value.replace('.json','');
-        top.location='?model='+model;
-  });
-
-});
-    </script>
-
-  
-
-</body>
-</html>
+# assume AJAX app
+# output
+ob_end_clean();
+header('Content-Type: text/html; charset=UTF-8');
+require_once 'template.php';
+exit;
+# /output
