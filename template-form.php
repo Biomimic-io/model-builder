@@ -39,7 +39,7 @@
 				<div class="row">
 					<div class="col-3">
 						<div id="logo_home">
-							<h1><a href="index.html">MAVIA | Register, Reservation, Questionare, Reviews form wizard</a></h1>
+							<h1><a href="/">Model Builder</a></h1>
 						</div>
 					</div>
 					<div class="col-9">
@@ -54,12 +54,14 @@
 						<!-- /social -->
 						<nav>
 							<ul class="cd-primary-nav">
-								<li><a href="index.html" class="animated_link">Register Version</a></li>
+								<li><a href="/" class="animated_link">Model builder</a></li>
+								<!--
 								<li><a href="reservation_version.html" class="animated_link">Reservation Version</a></li>
 								<li><a href="questionare_version.html" class="animated_link">Questionare Version</a></li>
 								<li><a href="review_version.html" class="animated_link">Review Version</a></li>
 								<li><a href="about.html" class="animated_link">About Us</a></li>
 								<li><a href="contacts.html" class="animated_link">Contact Us</a></li>
+								-->
 							</ul>
 						</nav>
 					</div>
