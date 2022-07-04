@@ -26,6 +26,14 @@
 		<link href="/css/custom.css" rel="stylesheet">
 		<script src="/js/modernizr.js"></script>
 		<!-- Modernizr -->
+		<!--
+		<style>
+			#form-anchor {
+				overflow-y: hidden;
+				max-height: 380px;
+			}
+		</style>
+		-->
 	</head>
 	<body>
 		<div id="preloader">
@@ -72,12 +80,40 @@
 		<!-- End Header -->
 		<main>
 			<div id="form_container">
-				<div class="container">
-					<div class="row">
-						<div id="form-anchor"></div>
+				<div class="row">
+					<div class="col-lg-5">
+						<div id="left_form">
+							<figure><img src="img/registration_bg.svg" alt=""></figure>
+							<h2>Registration</h2>
+							<p>Tation argumentum et usu, dicit viderer evertitur te has. Eu dictas concludaturque usu, facete detracto patrioque an per, lucilius pertinacia eu vel.</p>
+							<a href="#0" id="more_info" data-bs-toggle="modal" data-bs-target="#more-info"><i class="pe-7s-info"></i></a>
+						</div>
 					</div>
-				</div>
-			</div>
+					<div class="col-lg-7">
+	
+						<div id="wizard_container">
+							<div id="top-wizard">
+								<div id="progressbar"></div>
+							</div>
+							<!-- /top-wizard -->
+							<form name="example-1" id="wrapped" method="POST">
+								<input id="website" name="website" type="text" value="">
+								<!-- Leave for security protection, read docs for details -->
+								<div id="middle-wizard">
+									<div class="submit step" id="form-anchor"></div>
+									<!-- /step-->
+								</div>
+								<!-- /middle-wizard -->
+								<div id="bottom-wizard">
+									<button type="submit" name="submit" class="submit">Submit</button>
+								</div>
+								<!-- /bottom-wizard -->
+							</form>
+						</div>
+						<!-- /Wizard container -->
+					</div>
+				</div><!-- /Row -->
+			</div><!-- /Form_container -->
 		</main>
 		<footer id="home" class="clearfix">
 			<p>© 2022</p>
@@ -163,6 +199,7 @@
 			jQuery($ => {
 				$(document).ready(() => {
 					$('#form-anchor').formRender({dataType:'json',formData:'<?php echo $out;?>'});
+					$('form').submit(e => {e.preventDefault();});
 				});
 			});
 		</script>
