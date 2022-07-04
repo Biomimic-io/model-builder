@@ -17,6 +17,17 @@
 date_default_timezone_set('Europe/Kiev'); # set desired timezone here
 # /init
 
+# lib
+function fillAttributes($source,$keys){
+	$out = [];
+	if(!is_array($keys) or !$keys)
+		return $out;
+	foreach($keys as $k)
+		$out[$k] = isset($source[$k]) ? $k.'="'.$source[$k].'"' : '';
+	return implode(' ',$out);
+}
+# /lib
+
 # route
 $req = !empty($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : strval(@getenv('REQUEST_URI'));
 if(false !== ($q = strpos($req,'?')) or false !== ($a = strpos($req,'&'))){
@@ -34,6 +45,7 @@ $route = (strpos($req,'/') !== false) ? explode('/',$req) : [$req];
 # /route
 
 # router
+$tpl = 'main';
 $out = $err = '';
 if('model' == $route[0]){ # * /model
 
@@ -57,7 +69,87 @@ if('model' == $route[0]){ # * /model
 							$out = 'ok';
 						} else $err = "Can't store model!";
 					} else $err = "Invalid model supplied!";
-				} else $out = file_get_contents("./models/$model.json");
+				} elseif('form' == $act){ # * /model/:name/form
+					$tpl = 'form';
+					$j = json_decode(file_get_contents("./models/$model.json"),true);
+					$form = [];
+					foreach($j as $ctl){
+						if('header' == $ctl['type'] or 'paragraph' == $ctl['type'])
+							$form[] = <<<TPL
+<{$ctl['subtype']}>{$ctl['label']}</{$ctl['subtype']}>
+TPL;
+						elseif('hidden' == $ctl['type']){
+							$attrz = fillAttributes($ctl,['name','value']);
+							$form[] = <<<TPL
+<input type="{$ctl['type']}"$attrz>
+TPL;
+						} elseif('text' == $ctl['type'] or 'number' == $ctl['type'] or 'date' == $ctl['type'] or 'file' == $ctl['type']){ # TODO: more simple types here?
+							$ctl['class'] = isset($ctl['className']) ? $ctl['className'] : '';
+							$ctl['placeholder'] = isset($ctl['label']) ? $ctl['label'] : '';
+							$attrz = fillAttributes($ctl,['name','value','class','placeholder']);
+							$form[] = <<<TPL
+<div class="row">
+	<div class="col-md-12">
+		<div class="form-group">
+			<input type="{$ctl['type']}"$attrz>
+		</div>
+	</div>
+	<!-- /col-sm-12 -->
+</div>
+<!-- /row -->
+TPL;
+						} elseif('textarea' == $ctl['type']){
+							$ctl['class'] = isset($ctl['className']) ? $ctl['className'] : '';
+							$ctl['placeholder'] = isset($ctl['label']) ? $ctl['label'] : '';
+							$attrz = fillAttributes($ctl,['name','value','class','placeholder']);
+							$form[] = <<<TPL
+<div class="form-group">
+	<textarea $attrz></textarea>
+</div>
+TPL;
+						} elseif('radio-group' == $ctl['type'] or 'checkbox-group' == $ctl['type']){
+							$attrz = fillAttributes($ctl,['name']);
+							$type = ('radio-group' == $ctl['type']) ? 'radio' : 'checkbox';
+							$valz = [];
+							foreach($ctl['values'] as $vv){
+								$sel = $vv['selected'] ? ' checked' : '';
+								$valz[] = <<<TPL
+<label><input type="$type" value="{$vv['value']}" $sel $attrz class="icheck">{$vv['label']}</label>
+TPL;
+							}
+							$valz = implode("\n",$valz);
+							$form[] = <<<TPL
+<div class="form-group radio_input">
+	$valz
+</div>
+TPL;
+						} elseif('select' == $ctl['type']){
+							$ctl['class'] = isset($ctl['className']) ? $ctl['className'] : '';
+							$attrz = fillAttributes($ctl,['name','class']);
+							$valz = [];
+							foreach($ctl['values'] as $vv){
+								$sel = $vv['selected'] ? ' selected' : '';
+								$valz[] = <<<TPL
+<option value="{$vv['value']}"$sel>{$vv['label']}</option>
+TPL;
+							}
+							$valz = implode("\n",$valz);
+							$form[] = <<<TPL
+<div class="styled-select">
+	<select $attz>
+		$valz
+	</select>
+</div>
+TPL;
+						} elseif('button' == $ctl['type']){
+							$attrz = fillAttributes($ctl,['name','class']);
+							$form[] = <<<TPL
+<button type="{$ctl['subtype']}" $attrz>{$ctl['label']}</button>
+TPL;
+						}
+					}
+					$out = implode("\n",$form);
+				} else $out = file_get_contents("./models/$model.json"); # * /model/:name/*
 			} else $err = "Model not found!";
 		} elseif(!empty($route[1]))
 			$err = "Invalid model specified!";
@@ -77,6 +169,6 @@ if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) and 'xmlhttprequest' == strtolower(
 # output
 ob_end_clean();
 header('Content-Type: text/html; charset=UTF-8');
-require_once 'template.php';
+require_once "template-$tpl.php";
 exit;
 # /output

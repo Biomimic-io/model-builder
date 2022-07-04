@@ -14,7 +14,7 @@
 	</head>
 	<body translate="no">
 		<select class="model-select">
-			<option disabled>--Please choose a Model--</option>
+			<option selected disabled>--Please choose a Model--</option>
 		</select>
 		--- Model Name <input type="text" class="model-add-name"> <button class="model-add-trigger">Create New Model</button>
 		<div id="build-wrap"></div>
@@ -26,7 +26,7 @@
 			let formData = null;
 			jQuery(function($){
 				const loadModel = modelName => {
-					$.get(`/model/${modelName}`).done(rsp => {
+					$.get(`/model/${modelName}/view`).done(rsp => {
 						if(rsp.content){
 							try {
 								formData = JSON.parse(rsp.content);
@@ -39,13 +39,15 @@
 						}
 					});
 				};
-				const loadModelList = () => {
+				const loadModelList = (callback) => {
 					$.get('/model/list').done(rsp => {
 						$('.model-select').children().not('option:first').remove();
 						if(rsp.content){
 							for(let i in rsp.content){
 								$('.model-select').children().last().after(`<option value="${i}">${i} (${rsp.content[i]})</option>`);
 							}
+							if(callback && 'function' == typeof callback)
+								callback.call();
 						} else {
 							console.error(rsp.err);
 						}
@@ -72,7 +74,12 @@
 							if(rsp.err){
 								alert(`Failed to save model: ${rsp.err}`);
 							} else {
-								loadModelList();
+								loadModelList(() => {
+									$('.model-select').val(modelName).change();
+									if('undefined' != typeof window.history){
+										history.pushState({},'',window.location.path = `/model/${modelName}/view`);
+									}
+								});
 								loadModel(modelName);
 							}
 						}).fail(rsp => {
@@ -82,11 +89,22 @@
 				});
 				$('.model-select').change(e => {
 					const modelName = $('.model-select').val();
-					if(modelName)
+					if(modelName){
 						loadModel(modelName);
+						if('undefined' != typeof window.history){
+							history.pushState({},'',window.location.path = `/model/${modelName}/view`);
+						}
+					}
 				});
 				$(document).ready(e => {
 					loadModelList();
+					if('/' != window.location.pathname){
+						const match = window.location.pathname.match(/^\/model\/([^\/]+)\/view$/i);
+						if(match && 'undefined' != typeof match[1] && match[1]){
+							setTimeout(() => {$('.model-select').val(match[1]);},100);
+							loadModel(match[1]);
+						}
+					}
 				});
 			});
 		</script>
