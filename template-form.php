@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta name="description" content="formBuilder">
 		<meta name="author" content="Ansonika">
-		<title>formBuilder</title>
+		<title>formRender</title>
 		<!-- Favicons-->
 		<link rel="shortcut icon" href="/img/favicon.ico" type="image/x-icon">
 		<link rel="apple-touch-icon" type="image/x-icon" href="/img/apple-touch-icon-57x57-precomposed.png">
@@ -13,7 +13,7 @@
 		<link rel="apple-touch-icon" type="image/x-icon" sizes="114x114" href="/img/apple-touch-icon-114x114-precomposed.png">
 		<link rel="apple-touch-icon" type="image/x-icon" sizes="144x144" href="/img/apple-touch-icon-144x144-precomposed.png">
 		<!-- GOOGLE WEB FONT -->
-		<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;700&display=swap" rel="stylesheet">
+		<link href="//fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;700&display=swap" rel="stylesheet">
 		<!-- BASE CSS -->
 		<link href="/css/bootstrap.min.css" rel="stylesheet">
 		<link href="/css/style.css" rel="stylesheet">
@@ -70,44 +70,12 @@
 		<!-- End Header -->
 		<main>
 			<div id="form_container">
-				<div class="row">
-					<div class="col-lg-5">
-						<div id="left_form">
-							<figure><img src="img/registration_bg.svg" alt=""></figure>
-							<h2>Registration</h2>
-							<p>Tation argumentum et usu, dicit viderer evertitur te has. Eu dictas concludaturque usu, facete detracto patrioque an per, lucilius pertinacia eu vel.</p>
-							<a href="#0" id="more_info" data-bs-toggle="modal" data-bs-target="#more-info"><i class="pe-7s-info"></i></a>
-						</div>
+				<div class="container">
+					<div class="row">
+						<div id="form-anchor"></div>
 					</div>
-					<div class="col-lg-7">
-
-						<div id="wizard_container">
-							<div id="top-wizard">
-								<div id="progressbar"></div>
-							</div>
-							<!-- /top-wizard -->
-							<form name="example-1" id="wrapped" method="POST">
-								<input id="website" name="website" type="text" value="">
-								<!-- Leave for security protection, read docs for details -->
-								<div id="middle-wizard">
-									<div class="submit step">
-										<?php echo $out;?>
-									</div>
-									<!-- /step-->
-								</div>
-								<!-- /middle-wizard -->
-								<div id="bottom-wizard">
-									<button type="button" name="backward" class="backward">Backward </button>
-									<button type="button" name="forward" class="forward">Forward</button>
-									<button type="submit" name="process" class="submit">Submit</button>
-								</div>
-								<!-- /bottom-wizard -->
-							</form>
-						</div>
-						<!-- /Wizard container -->
-					</div>
-				</div><!-- /Row -->
-			</div><!-- /Form_container -->
+				</div>
+			</div>
 		</main>
 		<footer id="home" class="clearfix">
 			<p>© 2022</p>
@@ -177,14 +145,24 @@
 		<!-- SCRIPTS -->
 		<!-- Jquery-->
 		<script src="/js/jquery-3.6.0.min.js"></script>
+		<!--<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>-->
+		<script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+		<script src="//formbuilder.online/assets/js/form-render.min.js"></script>
 		<!-- Common script -->
 		<script src="/js/common_scripts_min.js"></script>
 		<!-- Wizard script -->
-		<script src="/js/registration_wizard_func.js"></script>
+		<!--<script src="/js/registration_wizard_func.js"></script>-->
 		<!-- Menu script -->
 		<script src="/js/velocity.min.js"></script>
 		<script src="/js/main.js"></script>
 		<!-- Theme script -->
 		<script src="/js/functions.js"></script>
+		<script>
+			jQuery($ => {
+				$(document).ready(() => {
+					$('#form-anchor').formRender({dataType:'json',formData:'<?php echo $out;?>'});
+				});
+			});
+		</script>
 	</body>
 </html>

@@ -16,7 +16,7 @@
 		<select class="model-select">
 			<option selected disabled>--Please choose a Model--</option>
 		</select>
-		--- Model Name <input type="text" class="model-add-name"> <button class="model-add-trigger">Create New Model</button>
+		--- Model Name <span class="form_nav_ctl_wrap"></span> <input type="text" class="model-add-name"> <button class="model-add-trigger">Create New Model</button>
 		<div id="build-wrap"></div>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
@@ -31,6 +31,8 @@
 							try {
 								formData = JSON.parse(rsp.content);
 								setTimeout(() => {formBuilder.actions.setData(formData);},50);
+								$('.form_nav_ctl_wrap').html('<button>Show form</button>');
+								setTimeout(() => {$('.form_nav_ctl_wrap button').click(e => {e.preventDefault();window.open(window.location.toString().replace('/view','/form'));})},100);
 							} catch(x){
 								alert(`Can't load form data for model ${modelName}: ${x}`);
 							}
