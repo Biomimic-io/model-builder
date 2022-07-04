@@ -48,7 +48,6 @@ $route = (strpos($req,'/') !== false) ? explode('/',$req) : [$req];
 $tpl = 'main';
 $out = $err = '';
 if('model' == $route[0]){ # * /model
-
 	# following isn't a good practice at all, it only suits tiny-scaled projects
 	# normally it should be a separate routing processor
 	# in that tiny projects it can save time and effort though
@@ -83,7 +82,7 @@ TPL;
 							$form[] = <<<TPL
 <input type="{$ctl['type']}"$attrz>
 TPL;
-						} elseif('text' == $ctl['type'] or 'number' == $ctl['type'] or 'date' == $ctl['type'] or 'file' == $ctl['type']){ # TODO: more simple types here?
+						} elseif('text' == $ctl['type'] or 'number' == $ctl['type'] or 'date' == $ctl['type'] or 'file' == $ctl['type']){
 							$ctl['class'] = isset($ctl['className']) ? $ctl['className'] : '';
 							$ctl['placeholder'] = isset($ctl['label']) ? $ctl['label'] : '';
 							$attrz = fillAttributes($ctl,['name','value','class','placeholder']);
@@ -97,6 +96,36 @@ TPL;
 	<!-- /col-sm-12 -->
 </div>
 <!-- /row -->
+TPL;
+						} elseif('autocomplete' == $ctl['type']){
+							$ctl['class'] = isset($ctl['className']) ? $ctl['className'] : '';
+							$ctl['placeholder'] = isset($ctl['label']) ? $ctl['label'] : '';
+							$attrz = fillAttributes($ctl,['name','value','class','placeholder']);
+							##
+							$valz = [];
+							foreach($ctl['values'] as $vv){
+								$sel = $vv['selected'] ? ' checked' : '';
+								$valz[] = $vv['value'];
+							}
+							$valz = json_encode($valz);
+							##
+							$form[] = <<<TPL
+<div class="row">
+	<div class="col-md-12">
+		<div class="form-group">
+			<input type="text"$attrz>
+		</div>
+	</div>
+	<!-- /col-sm-12 -->
+</div>
+<!-- /row -->
+<script defer>
+window.onload = () => {
+	jQuery($ => {
+		$('input[name={$ctl['name']}]').autocomplete({source:$valz});
+	});
+};
+</script>
 TPL;
 						} elseif('textarea' == $ctl['type']){
 							$ctl['class'] = isset($ctl['className']) ? $ctl['className'] : '';
