@@ -15,175 +15,65 @@
 # /debug
 
 date_default_timezone_set('Europe/Kiev'); # set desired timezone here
+
+define('ROOT_PATH',str_replace('\\','/',realpath(dirname(__FILE__)).'/'));
+
+spl_autoload_register(function($class){
+	if(class_exists($class))
+		return;
+	if(strpos($class,'\\')){
+		$fqcn = explode('\\',$class);
+		foreach($fqcn as &$np)
+			$np = str_replace('_','-',strtolower($np));
+		$fpn = implode('/',$fqcn);
+		if(file_exists(ROOT_PATH.'vendor/'.$fpn.'/'.strtolower($fqcn[count($fqcn)-1]).'.class.php'))
+			require_once ROOT_PATH.'vendor/'.$fpn.'/'.strtolower($fqcn[count($fqcn)-1]).'.class.php';
+	} else {
+		$fn = 'classes/'.str_replace('_','-',strtolower($class)).'.class.php';
+		if(file_exists(ROOT_PATH.$fn))
+			require_once ROOT_PATH.$fn;
+	}
+});
 # /init
 
-# lib
-function fillAttributes($source,$keys){
-	$out = [];
-	if(!is_array($keys) or !$keys)
-		return $out;
-	foreach($keys as $k)
-		$out[$k] = isset($source[$k]) ? $k.'="'.$source[$k].'"' : '';
-	return implode(' ',$out);
-}
-# /lib
-
-# route
-$req = !empty($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : strval(@getenv('REQUEST_URI'));
-if(false !== ($q = strpos($req,'?')) or false !== ($a = strpos($req,'&'))){
-	if($q and $a)
-		$x = ($q > $a) ? $a : $q;
-	else
-		$x = ($a) ? $a : $q;
-	$req = substr($req,0,$x);
-	if(isset($_GET[substr($req,0,$x)]))
-		unset($_GET[substr($req,0,$x)]);
-}
-if('/' == substr($req,0,1))
-	$req = substr($req,1);
-$route = (strpos($req,'/') !== false) ? explode('/',$req) : [$req];
-# /route
-
-# router
-$tpl = 'main';
+$tpl = 'builder';
 $out = $err = '';
-if('model' == $route[0]){ # * /model
-	# following isn't a good practice at all, it only suits tiny-scaled projects
-	# normally it should be a separate routing processor
-	# in that tiny projects it can save time and effort though
-	if(!empty($route[1])){
-		if('list' == $route[1]){ # * /model/list
-			$out = [];
-			foreach(glob('./models/*.json') as $json)
-				$out[basename($json,'.json')] = date('r',filemtime($json));
-			if(!$out)
-				$err = "No models found!";
-		} elseif(preg_match('/^[\da-z\-_ ]+$/i',$route[1])){ # * /model/*
-			$act = !empty($route[2]) ? $route[2] : '';
-			if(file_exists("./models/{$route[1]}.json") or 'save' == $act){ # * /model/:name
-				$model = $route[1];
-				if('save' == $act and ($data = file_get_contents('php://input'))){ # POST /model/:name/save
-					if(preg_match('/^[\[\{].+[\}\]]$/',trim($data))){
-						if(@file_put_contents("./models/$model.json",trim($data))){
-							$out = 'ok';
-						} else $err = "Can't store model!";
-					} else $err = "Invalid model supplied!";
-				} elseif('form' == $act){ # * /model/:name/form
-					$tpl = 'form';
-					$j = json_decode(file_get_contents("./models/$model.json"),true);
-					$form = [];
-					foreach($j as $ctl){
-						if('header' == $ctl['type'] or 'paragraph' == $ctl['type'])
-							$form[] = <<<TPL
-<{$ctl['subtype']}>{$ctl['label']}</{$ctl['subtype']}>
-TPL;
-						elseif('hidden' == $ctl['type']){
-							$attrz = fillAttributes($ctl,['name','value']);
-							$form[] = <<<TPL
-<input type="{$ctl['type']}"$attrz>
-TPL;
-						} elseif('text' == $ctl['type'] or 'number' == $ctl['type'] or 'date' == $ctl['type'] or 'file' == $ctl['type']){
-							$ctl['class'] = isset($ctl['className']) ? $ctl['className'] : '';
-							$ctl['placeholder'] = isset($ctl['label']) ? $ctl['label'] : '';
-							$attrz = fillAttributes($ctl,['name','value','class','placeholder']);
-							$form[] = <<<TPL
-<div class="row">
-	<div class="col-md-12">
-		<div class="form-group">
-			<input type="{$ctl['type']}"$attrz>
-		</div>
-	</div>
-	<!-- /col-sm-12 -->
-</div>
-<!-- /row -->
-TPL;
-						} elseif('autocomplete' == $ctl['type']){
-							$ctl['class'] = isset($ctl['className']) ? $ctl['className'] : '';
-							$ctl['placeholder'] = isset($ctl['label']) ? $ctl['label'] : '';
-							$attrz = fillAttributes($ctl,['name','value','class','placeholder']);
-							##
-							$valz = [];
-							foreach($ctl['values'] as $vv){
-								$sel = $vv['selected'] ? ' checked' : '';
-								$valz[] = $vv['value'];
-							}
-							$valz = json_encode($valz);
-							##
-							$form[] = <<<TPL
-<div class="row">
-	<div class="col-md-12">
-		<div class="form-group">
-			<input type="text"$attrz>
-		</div>
-	</div>
-	<!-- /col-sm-12 -->
-</div>
-<!-- /row -->
-<script defer>
-window.onload = () => {
-	jQuery($ => {
-		$('input[name={$ctl['name']}]').autocomplete({source:$valz});
-	});
-};
-</script>
-TPL;
-						} elseif('textarea' == $ctl['type']){
-							$ctl['class'] = isset($ctl['className']) ? $ctl['className'] : '';
-							$ctl['placeholder'] = isset($ctl['label']) ? $ctl['label'] : '';
-							$attrz = fillAttributes($ctl,['name','value','class','placeholder']);
-							$form[] = <<<TPL
-<div class="form-group">
-	<textarea $attrz></textarea>
-</div>
-TPL;
-						} elseif('radio-group' == $ctl['type'] or 'checkbox-group' == $ctl['type']){
-							$attrz = fillAttributes($ctl,['name']);
-							$type = ('radio-group' == $ctl['type']) ? 'radio' : 'checkbox';
-							$valz = [];
-							foreach($ctl['values'] as $vv){
-								$sel = $vv['selected'] ? ' checked' : '';
-								$valz[] = <<<TPL
-<label><input type="$type" value="{$vv['value']}" $sel $attrz class="icheck">{$vv['label']}</label>
-TPL;
-							}
-							$valz = implode("\n",$valz);
-							$form[] = <<<TPL
-<div class="form-group radio_input">
-	$valz
-</div>
-TPL;
-						} elseif('select' == $ctl['type']){
-							$ctl['class'] = isset($ctl['className']) ? $ctl['className'] : '';
-							$attrz = fillAttributes($ctl,['name','class']);
-							$valz = [];
-							foreach($ctl['values'] as $vv){
-								$sel = $vv['selected'] ? ' selected' : '';
-								$valz[] = <<<TPL
-<option value="{$vv['value']}"$sel>{$vv['label']}</option>
-TPL;
-							}
-							$valz = implode("\n",$valz);
-							$form[] = <<<TPL
-<div class="styled-select">
-	<select $attz>
-		$valz
-	</select>
-</div>
-TPL;
-						} elseif('button' == $ctl['type']){
-							$attrz = fillAttributes($ctl,['name','class']);
-							$form[] = <<<TPL
-<button type="{$ctl['subtype']}" $attrz>{$ctl['label']}</button>
-TPL;
-						}
-					}
-					$out = implode("\n",$form);
-				} else $out = file_get_contents("./models/$model.json"); # * /model/:name/*
-			} else $err = "Model not found!";
-		} elseif(!empty($route[1]))
-			$err = "Invalid model specified!";
-	}
-}
+
+$R = Router::Instance();
+$R->HandleRequest('/model/list',function(){
+	$xl = Model::List();
+	$ls = [];
+	foreach($xl as $x)
+		$ls[$x['name']] = $x['modified'];
+	return [$ls,''];
+});
+$R->HandleRequest('/model/:name/save',function($name){
+	$data = file_get_contents('php://input');
+	if(preg_match('/^[\[\{].+[\}\]]$/',trim($data))){
+		$m = new Model($name);
+		if($m->Update($data))
+			return ['ok',''];
+		else
+			return ['',"Can't store model!"];
+	} else return ['',"Invalid model supplied!"];
+},'POST');
+$R->HandleRequest('/model/:name/form',function($name){
+	global $tpl;
+	$tpl = 'form';
+	$m = Model::Find($name);
+	if($m){
+		$f = new Form($m->data);
+		return [$f->Render(),''];
+	} else return ['','Model not found!'];
+});
+$R->HandleRequest('/model/:name',function($name){
+	$m = Model::Find($name);
+	if($m){
+		return [$m->Read(),''];
+	} else return ['','Model ['.$name.'] not found!'];
+});
+
+[$out,$err] = $R->ProcessRequest();
 
 if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) and 'xmlhttprequest' == strtolower($_SERVER['HTTP_X_REQUESTED_WITH'])){
 	$out = json_encode(['content'=>$out,'error'=>$err]);
@@ -198,6 +88,6 @@ if(!empty($_SERVER['HTTP_X_REQUESTED_WITH']) and 'xmlhttprequest' == strtolower(
 # output
 ob_end_clean();
 header('Content-Type: text/html; charset=UTF-8');
-require_once "template-$tpl.php";
+require_once ROOT_PATH."templates/$tpl.tpl";
 exit;
 # /output
