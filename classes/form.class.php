@@ -125,6 +125,21 @@ TPL;
 		return $out;
 	}
 	private function _renderMustache(){
-		# TODO: figure out what we gonna do
+		$mj = $this->data;
+		foreach($mj as &$ctl){
+			if('autocomplete' == $ctl['type']){
+				$vz = [];
+				foreach($ctl['values'] as $vv)
+					$vz[] = $vv['value'];
+				$ctl['mt_values'] = json_encode($vz);
+			} elseif('radio-group' == $ctl['type'] or 'checkbox-group' == $ctl['type']){
+				foreach($ctl['values'] as &$vv){
+					$vv['mt_type'] = ('radio-group' == $ctl['type']) ? 'radio' : 'checkbox';
+					$vv['mt_name'] = $ctl['name'];
+					$vv['mt_checked'] = $vv['selected'] ? ' checked' : '';
+				}
+			}
+		}
+		return json_encode($mj);
 	}
 }

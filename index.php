@@ -66,6 +66,15 @@ $R->HandleRequest('/model/:name/form',function($name){
 		return [$f->Render(),''];
 	} else return ['','Model not found!'];
 });
+$R->HandleRequest('/model/:name/mustache',function($name){
+	global $tpl;
+	$tpl = 'mustache';
+	$m = Model::Find($name);
+	if($m){
+		$f = new Form($m->data);
+		return [$f->Render(false),''];
+	} else return ['','Model not found!'];
+});
 $R->HandleRequest('/model/:name',function($name){
 	$m = Model::Find($name);
 	if($m){
