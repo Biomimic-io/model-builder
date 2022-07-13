@@ -3,6 +3,8 @@
 # never ever try to use such approach for any larger-scale projects!
 # I'm usually selecting approach basing on particular project specifics
 
+# UPD: project grows up so paradigm had to be changed
+
 # anyway, here we go!
 
 # init
