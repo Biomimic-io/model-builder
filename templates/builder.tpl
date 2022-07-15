@@ -56,14 +56,16 @@
 						}
 					});
 				};
+				const saveFormData = f => {
+					if('undefined' != typeof window.sessionStorage && 'undefined' != typeof formBuilder){
+						window.sessionStorage.setItem('formData',formBuilder.actions.getData('json'));
+					}
+				};
 				const $fbEditor = document.getElementById('build-wrap');
 				const options = {};
 				const formBuilder = $($fbEditor).formBuilder(options);
-				document.addEventListener('fieldAdded',e => {
-					if('undefined' != typeof window.sessionStorage){
-						window.sessionStorage.setItem('formData',formBuilder.actions.getData('json'));
-					}
-				});
+				document.addEventListener('fieldAdded',saveFormData);
+				document.addEventListener('fieldEditClosed',saveFormData);
 				$('.model-add-trigger').click(e => {
 					e.preventDefault();
 					const modelName = $('.model-add-name').val();
@@ -104,7 +106,7 @@
 					if('/' != window.location.pathname){
 						const match = window.location.pathname.match(/^\/model\/([^\/]+)(\/view)?$/i);
 						if(match && 'undefined' != typeof match[1] && match[1]){
-							setTimeout(() => {$('.model-select').val(match[1]);},100);
+							setTimeout(() => {$('.model-select').val(match[1]);},300);
 							loadModel(match[1]);
 						}
 					}
