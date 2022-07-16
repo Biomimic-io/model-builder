@@ -61,13 +61,7 @@
 						window.sessionStorage.setItem('formData',formBuilder.actions.getData('json'));
 					}
 				};
-				const $fbEditor = document.getElementById('build-wrap');
-				const options = {};
-				const formBuilder = $($fbEditor).formBuilder(options);
-				document.addEventListener('fieldAdded',saveFormData);
-				document.addEventListener('fieldEditClosed',saveFormData);
-				$('.model-add-trigger').click(e => {
-					e.preventDefault();
+				const sendFormData = () => {
 					const modelName = $('.model-add-name').val();
 					const modelData = window.sessionStorage.getItem('formData');
 					if('' === modelName){
@@ -91,6 +85,19 @@
 							alert(`Failed to save model: ${rsp.err}`);
 						});
 					}
+				};
+				const $fbEditor = document.getElementById('build-wrap');
+				const options = {
+					onSave: (e,formData) => {
+						sendFormData();
+					}
+				};
+				const formBuilder = $($fbEditor).formBuilder(options);
+				document.addEventListener('fieldAdded',saveFormData);
+				document.addEventListener('fieldEditClosed',saveFormData);
+				$('.model-add-trigger').click(e => {
+					e.preventDefault();
+					sendFormData();
 				});
 				$('.model-select').change(e => {
 					const modelName = $('.model-select').val();
@@ -108,6 +115,7 @@
 						if(match && 'undefined' != typeof match[1] && match[1]){
 							setTimeout(() => {$('.model-select').val(match[1]);},300);
 							loadModel(match[1]);
+							$('.model-add-name').val(match[1]);
 						}
 					}
 				});
