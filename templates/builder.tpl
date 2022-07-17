@@ -34,6 +34,7 @@
 								$('.form_nav_ctl_wrap').html('<button>Form</button><button>Mustache</button>');
 								setTimeout(() => {$('.form_nav_ctl_wrap button').eq(0).click(e => {e.preventDefault();window.open(window.location.toString().replace('/view','/form'));})},100);
 								setTimeout(() => {$('.form_nav_ctl_wrap button').eq(1).click(e => {e.preventDefault();window.open(window.location.toString().replace('/view','/mustache'));})},100);
+								setTimeout(() => {$('.model-add-name').val(modelName);},100);
 							} catch(x){
 								alert(`Can't load form data for model ${modelName}: ${x}`);
 							}
@@ -63,6 +64,7 @@
 				};
 				const sendFormData = () => {
 					const modelName = $('.model-add-name').val();
+					saveFormData();
 					const modelData = window.sessionStorage.getItem('formData');
 					if('' === modelName){
 						alert("Please input new model's name!");
@@ -115,7 +117,6 @@
 						if(match && 'undefined' != typeof match[1] && match[1]){
 							setTimeout(() => {$('.model-select').val(match[1]);},300);
 							loadModel(match[1]);
-							$('.model-add-name').val(match[1]);
 						}
 					}
 				});
